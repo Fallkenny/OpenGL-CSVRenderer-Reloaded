@@ -8,7 +8,6 @@
 #include "stb_image.h"
 #include "shader_m.h"
 #include "camera.h"
-
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
@@ -36,9 +35,10 @@ glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 // Reflexo especular
 float specularStrength = 0.5;
 
-std::vector<float>  read_csv(std::string filename)
+std::pair<std::string,std::vector<float>>  read_csv(std::string filename)
 {
     std::vector<float> resultVector;
+    std::string texture;
     std::ifstream myFile(filename);
     if(!myFile.is_open()) throw std::runtime_error("Could not open file");
 
@@ -49,6 +49,10 @@ std::vector<float>  read_csv(std::string filename)
     {
         std::stringstream ss(line);
     }
+    std::getline(myFile, line);
+    std::stringstream ss(line);
+    ss >> texture;
+
 
     while(std::getline(myFile, line))
     {
@@ -68,7 +72,7 @@ std::vector<float>  read_csv(std::string filename)
 
     myFile.close();
 
-    return resultVector;
+    return std::make_pair(texture,  resultVector);
 }
 
 int main()
@@ -127,94 +131,132 @@ int main()
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     float verticesCube[] = {
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,//factor, factor, // top right
-         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,//factor, 0.0f, // bottom right
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,//0.0f, 0.0f, // bottom left
-         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,//0.0f, factor,  // top left
-        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,//factor, factor, // top right
-        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,//factor, 0.0f, // bottom right
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f,  0.0f, -1.0f,
 
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,//0.0f, 0.0f, // bottom left
-         0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,//0.0f, factor,  // top left
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,//factor, factor, // top right
-         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,//factor, 0.0f, // bottom right
-        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,//0.0f, 0.0f, // bottom left
-        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,//0.0f, factor,  // top left
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f,  0.0f,  1.0f,
 
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,//factor, factor, // top right
-        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,//factor, 0.0f, // bottom right
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,//0.0f, 0.0f, // bottom left
-        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,//0.0f, factor,  // top left
-        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,//factor, factor, // top right
-        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,//factor, 0.0f, // bottom right
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f, -1.0f,  0.0f,  0.0f,
 
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,//0.0f, 0.0f, // bottom left
-         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,//0.0f, factor,  // top left
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,//factor, factor, // top right
-         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,//factor, 0.0f, // bottom right
-         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,//0.0f, 0.0f, // bottom left
-         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,//0.0f, factor,  // top left
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f,  0.0f,  0.0f,
 
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,//factor, factor, // top right
-         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,//factor, 0.0f, // bottom right
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,//0.0f, 0.0f, // bottom left
-         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,//0.0f, factor,  // top left
-        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,//factor, factor, // top right
-        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,//factor, 0.0f, // bottom right
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, -1.0f,  0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, -1.0f,  0.0f,
 
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,//0.0f, 0.0f, // bottom left
-         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,//0.0f, factor,  // top left
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,//factor, factor, // top right
-         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,//factor, 0.0f, // bottom right
-        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,//0.0f, 0.0f, // bottom left
-        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f//,0.0f, factor  // top left
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+         0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f,  1.0f,  0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f,  1.0f,  0.0f
     };
 
-    std::vector<float> vertexes =  read_csv("test comentado.csv");
+    std::pair<std::string,std::vector<float>> content =  read_csv("chao.csv");
+    std::string textureIMG = content.first;
+    std::vector<float> vertexes  = content.second;
 
     int vectorSize = vertexes.size();
     float* vertices = new float[vectorSize];
     for (size_t i = 0; i < vectorSize; i++) {
         vertices[i] = vertexes[i];
     }
-    std::cout << vectorSize/8 << std::endl;
+    std::cout << vectorSize/11 << std::endl;
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // first, configure the cube's VAO (and VBO)
-    unsigned int VBO, cubeVAO;
-    glGenVertexArrays(1, &cubeVAO);
+    unsigned int VBO, objVAO;
+    glGenVertexArrays(1, &objVAO);
     glGenBuffers(1, &VBO);
 
+    glBindVertexArray(objVAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float)* vectorSize, vertices, GL_STATIC_DRAW);
 
-    glBindVertexArray(cubeVAO);
+
 
     // position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
     // normal attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(3 * sizeof(float)));
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     //objColor attribute
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(float), (void*)(6 * sizeof(float)));
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
-    // unsigned int indices[] = {
-    //     0, 1, 3, // first triangle
-    //     1, 2, 3  // second triangle
-    // };
+    //texture coord attribute
+    glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(9 * sizeof(float)));
+    glEnableVertexAttribArray(3);
+
+
+    unsigned int texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    std::string tmp = "textures/"+ textureIMG;
+    unsigned char *data = stbi_load(tmp.c_str(), &width, &height, &nrChannels, 0);
+    if (data)
+    {
+        // Se a imagem for PNG com transparência
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        // Se a imagem for JPG, e portanto sem transparência
+        //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+
+
+
+
+
+
     // second, configure the light's VAO (VBO stays the same; the vertices are the same for the light object which is also a 3D cube)
-    unsigned int lightCubeVAO, lightCubeVBO, EBO;
+    unsigned int lightCubeVAO, lightCubeVBO;
     glGenVertexArrays(1, &lightCubeVAO);
     glGenBuffers(1, &lightCubeVBO);
-    // glGenBuffers(1, &EBO);
 
     glBindBuffer(GL_ARRAY_BUFFER, lightCubeVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(verticesCube), verticesCube, GL_STATIC_DRAW);
-
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    // glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
     glBindVertexArray(lightCubeVAO);
 
@@ -224,62 +266,6 @@ int main()
    // normal attribute
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-
-
-    // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-    // glEnableVertexAttribArray(2);
-
-
-
-
-
-
-    // // load and create a texture
-    // // -------------------------
-    // unsigned int texture;
-    // glGenTextures(1, &texture);
-    // glBindTexture(GL_TEXTURE_2D, texture); // all upcoming GL_TEXTURE_2D operations now have effect on this texture object
-
-    // // set the texture wrapping parameters
-    // // Podem ser GL_REPEAT. GL_MIRRORED_REPEAT, GL_CLAMP_TO_BORDER, GL_CLAMP_TO_EDGE
-
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    // // set texture filtering parameters
-    // // Podem ser GL_LINEAR, GL_NEAREST, GL_NEAREST_MIPMAP_LINEAR, GL_NEAREST_MIPMAP_NEAREST
-
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    // glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // // load image, create texture and generate mipmaps
-    // int width, height, nrChannels;
-
-    // // Imagens são carregadas de baixo para cima. Precisam ser invertidas
-    // stbi_set_flip_vertically_on_load(1);
-
-    // // Corrige o alinhamento da imagem em imagens cujas dimensões não são potências de dois
-    // // NPOT (Not Power-of-Two)
-    // glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    // //unsigned char *data = stbi_load("res/images/gremio.jpg", &width, &height, &nrChannels, 0);
-    // unsigned char *data = stbi_load("hereComesTheSun_durudurum.jpg", &width, &height, &nrChannels, 0);
-    // if (data)
-    // {
-    //     // Se a imagem for PNG com transparência
-    //     //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-    //     // Se a imagem for JPG, e portanto sem transparência
-    //     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-
-    //     glGenerateMipmap(GL_TEXTURE_2D);
-    // }
-    // else
-    // {
-    //     std::cout << "Failed to load texture" << std::endl;
-    // }
-    // stbi_image_free(data);
-
-
-
-
 
 
     // render loop
@@ -305,6 +291,8 @@ int main()
         lightPos.x = 1.0f + sin(glfwGetTime()) * 2.0f;
         lightPos.y = sin(glfwGetTime() / 2.0f) * 1.0f;
 
+        glBindTexture(GL_TEXTURE_2D, texture);
+
         // be sure to activate shader when setting uniforms/drawing objects
         lightingShader.use();
         //lightingShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
@@ -326,17 +314,8 @@ int main()
         lightingShader.setMat4("model", model);
 
         // render the cube
-        glBindVertexArray(cubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, vectorSize/9);
-
-
-
-
-        // glBindTexture(GL_TEXTURE_2D, texture);
-
-
-
-
+        glBindVertexArray(objVAO);
+        glDrawArrays(GL_TRIANGLES, 0, vectorSize/11);
 
         // also draw the lamp object
         lightCubeShader.use();
@@ -359,7 +338,7 @@ int main()
 
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
-    glDeleteVertexArrays(1, &cubeVAO);
+    glDeleteVertexArrays(1, &objVAO);
     glDeleteVertexArrays(1, &lightCubeVAO);
     glDeleteBuffers(1, &lightCubeVBO);
     glDeleteBuffers(1, &VBO);
