@@ -175,6 +175,7 @@ int main()
     };
 
     std::pair<std::string,std::vector<float>> content =  read_csv("chao.csv");
+    // std::pair<std::string,std::vector<float>> content =  read_csv("paredes.csv");
     std::string textureIMG = content.first;
     std::vector<float> vertexes  = content.second;
 
@@ -288,8 +289,9 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // change the light's position values over time (can be done anywhere in the render loop actually, but try to do it at least before using the light source positions)
-        lightPos.x = 1.0f + sin(glfwGetTime()) * 2.0f;
-        lightPos.y = sin(glfwGetTime() / 2.0f) * 1.0f;
+        lightPos.x = cos(glfwGetTime()) * 0.5f; // 0, 1, 0, 1
+        lightPos.y = sin(glfwGetTime()) * 10.0f; // 0, 1, 0, 1
+        lightPos.z = sin(glfwGetTime()) * 10.0f; // 0, 1, 0, 1
 
         glBindTexture(GL_TEXTURE_2D, texture);
 
