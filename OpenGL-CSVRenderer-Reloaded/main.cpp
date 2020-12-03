@@ -273,7 +273,7 @@ int main()
     std::string models[] = 
     {
         "chao.csv",
-        "chao2.csv"
+        "paredes.csv"
     };
 
     int modelscount = sizeof(models)/sizeof(models[0]);
@@ -321,9 +321,9 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // change the light's position values over time (can be done anywhere in the render loop actually, but try to do it at least before using the light source positions)
-        lightPos.x = cos(glfwGetTime()) * 0.5f; // 0, 1, 0, 1
-        lightPos.y = sin(glfwGetTime()) * 10.0f; // 0, 1, 0, 1
-        lightPos.z = sin(glfwGetTime()) * 10.0f; // 0, 1, 0, 1
+        lightPos.x = cos(glfwGetTime()) * 1.0f; // 0, 1, 0, 1
+        lightPos.y = sin(glfwGetTime()) * 5.0f; // 0, 1, 0, 1
+        lightPos.z = 1.0f + sin(glfwGetTime()) * 5.0f; // 0, 1, 0, 1
 
         // be sure to activate shader when setting uniforms/drawing objects
         lightingShader.use();
