@@ -273,7 +273,15 @@ int main()
     std::string models[] = 
     {
         "chao.csv",
-        "paredes.csv"
+        "paredes.csv",
+        "teto.csv",
+        "porta.csv",
+        "janela_d.csv",
+        "janela_e.csv",
+        "chamine.csv",
+        "caule.csv",
+        "copa.csv"
+        //"cerca.csv"
     };
 
     int modelscount = sizeof(models)/sizeof(models[0]);
