@@ -243,8 +243,8 @@ int main()
         "janela_e.csv",
         "chamine.csv",
         "caule.csv",
-        "copa.csv"
-        //"cerca.csv"
+        "copa.csv",
+        "cerca.csv"
     };
 
     int modelscount = sizeof(models) / sizeof(models[0]);
@@ -276,7 +276,7 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // change the light's position values over time (can be done anywhere in the render loop actually, but try to do it at least before using the light source positions)
-        lightPos.x = cos(glfwGetTime()) * 1.0f;
+        lightPos.x = cos(glfwGetTime()) * 2.5f;
         lightPos.y = sin(glfwGetTime()) * 5.0f;
         lightPos.z = cos(glfwGetTime()) * 5.0f;
 
