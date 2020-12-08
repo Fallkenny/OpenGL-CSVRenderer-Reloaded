@@ -1,13 +1,11 @@
-//edit
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "stb_image.h"
-#include "shader_m.h"
-#include "camera.h"
+#include "lib/shader_m.h"
+#include "lib/camera.h"
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
@@ -73,7 +71,6 @@ std::pair<std::string, std::vector<float>> read_csv(std::string filename)
 
         while (ss >> val)
         {
-
             resultVector.push_back(val);
 
             if (ss.peek() == ';')
@@ -107,7 +104,6 @@ RenderableObj load_renderableObj(std::string file)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    // first, configure the cube's VAO (and VBO)
     unsigned int VBO, objVAO;
     glGenVertexArrays(1, &objVAO);
     glGenBuffers(1, &VBO);
@@ -116,18 +112,15 @@ RenderableObj load_renderableObj(std::string file)
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vectorSize, vertices, GL_STATIC_DRAW);
 
-    // position attribute
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
-    // normal attribute
+
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
-    //objColor attribute
     glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void *)(6 * sizeof(float)));
     glEnableVertexAttribArray(2);
 
-    //texture coord attribute
     glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void *)(9 * sizeof(float)));
     glEnableVertexAttribArray(3);
 
@@ -151,11 +144,7 @@ RenderableObj load_renderableObj(std::string file)
         unsigned char *data = stbi_load(tmp.c_str(), &width, &height, &nrChannels, 0);
         if (data)
         {
-            // Se a imagem for PNG com transparência
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-            // Se a imagem for JPG, e portanto sem transparência
-            //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-
             glGenerateMipmap(GL_TEXTURE_2D);
         }
         else
@@ -172,7 +161,6 @@ RenderableObj load_renderableObj(std::string file)
     obj.vertexes = vertices;
     obj.VAO = objVAO;
     obj.VBO = VBO;
-
 
     return obj;
 }
@@ -225,17 +213,12 @@ int main()
 
     // build and compile our shader zprogram
     // ------------------------------------
-    Shader lightingShader("phong_lighting.vs", "phong_lighting.fs");
-    // Iluminação pelo modelo de Gourad
-    //Shader lightingShader("gourad_lighting.vs", "gourad_lighting.fs");
-    // Phong no espaço de visualização ao invés de no espaço mundial
-    //Shader lightingShader("model_lighting.vs", "model_lighting.fs");
+    Shader lightingShader("shader/phong_lighting.vs", "shader/phong_lighting.fs");
+    Shader lightCubeShader("shader/light_cube.vs", "shader/light_cube.fs");
 
-    Shader lightCubeShader("light_cube.vs", "light_cube.fs");
-
-    std::string models[] = 
+    std::string models[] =
     {
-        "chao.csv",        
+        "chao.csv",
         "paredes.csv",
         "teto.csv",
         "porta.csv",
@@ -252,9 +235,9 @@ int main()
 
     for (int i = 0; i < modelscount; i++)
     {
-        objects[i] = load_renderableObj(models[i]);
+        objects[i] = load_renderableObj("csv/"+models[i]);
     }
-    RenderableObj sun = load_renderableObj("sun.csv");
+    RenderableObj sun = load_renderableObj("csv/sun.csv");
 
     // render loop
     // -----------
@@ -266,65 +249,50 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // input
-        // -----
         processInput(window);
 
-        // render
-        // ------
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // change the light's position values over time (can be done anywhere in the render loop actually, but try to do it at least before using the light source positions)
+
         lightPos.x = cos(glfwGetTime()) * 2.5f;
         lightPos.y = sin(glfwGetTime()) * 5.0f;
         lightPos.z = cos(glfwGetTime()) * 5.0f;
 
-        // be sure to activate shader when setting uniforms/drawing objects
+
         lightingShader.use();
-        //lightingShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
         lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
         lightingShader.setVec3("lightPos", lightPos);
         lightingShader.setVec3("viewPos", camera.Position);
         lightingShader.setFloat("specularStrength", specularStrength);
 
-        // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         lightingShader.setMat4("projection", projection);
         lightingShader.setMat4("view", view);
 
-        // world transformation
+
         glm::mat4 model = glm::mat4(1.0f);
-        // Demonstra o problema da distorção do vetor normal
-        //model = glm::scale(model, glm::vec3(0.5f, 0.2f, 3.0f)); // transformação de escala não linear
         lightingShader.setMat4("model", model);
 
         for (int i = 0; i < modelscount; i++)
         {
-            glBindTexture(GL_TEXTURE_2D, objects[i].texture);            
+            glBindTexture(GL_TEXTURE_2D, objects[i].texture);
             lightingShader.setBool("drawTexture", objects[i].loadedTexture);
-            
-            
-            // render the cube
             glBindVertexArray(objects[i].VAO);
             glDrawArrays(GL_TRIANGLES, 0, objects[i].pointsCount);
         }
 
-        // also draw the lamp object
         lightCubeShader.use();
         lightCubeShader.setMat4("projection", projection);
         lightCubeShader.setMat4("view", view);
         model = glm::mat4(1.0f);
         model = glm::translate(model, lightPos);
-        //model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
         lightCubeShader.setMat4("model", model);
 
         glBindVertexArray(sun.VAO);
         glDrawArrays(GL_TRIANGLES, 0, sun.pointsCount);
 
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
