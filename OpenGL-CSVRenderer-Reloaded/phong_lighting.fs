@@ -12,6 +12,7 @@ uniform vec3 lightColor;
 //uniform vec3 objectColor;
 uniform float specularStrength;
 
+uniform bool drawTexture;
 uniform sampler2D ourTexture;
 
 void main()
@@ -37,7 +38,10 @@ void main()
         
     vec3 result = (ambient + diffuse + specular) * objectColor;
 
-    FragColor = texture(ourTexture, TextCoord) * vec4(result, 1.0);
+    if(drawTexture)
+        FragColor = texture(ourTexture, TextCoord) * vec4(result, 1.0);
+    else
+        FragColor = vec4(result, 1.0);
 } 
 
 

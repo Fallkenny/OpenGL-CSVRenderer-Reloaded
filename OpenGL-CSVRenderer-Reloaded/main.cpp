@@ -42,6 +42,7 @@ typedef struct
     unsigned int texture;
     float *vertexes;
     int pointsCount;
+    bool loadedTexture;
 
 } RenderableObj;
 
@@ -130,41 +131,48 @@ RenderableObj load_renderableObj(std::string file)
     glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void *)(9 * sizeof(float)));
     glEnableVertexAttribArray(3);
 
-    unsigned int texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(1);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-    std::string tmp = "textures/" + textureIMG;
-    unsigned char *data = stbi_load(tmp.c_str(), &width, &height, &nrChannels, 0);
-    if (data)
+    if (textureIMG != "")
     {
-        // Se a imagem for PNG com transparência
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        // Se a imagem for JPG, e portanto sem transparência
-        //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        obj.loadedTexture =true;
+        unsigned int texture;
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
 
-        glGenerateMipmap(GL_TEXTURE_2D);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        int width, height, nrChannels;
+        stbi_set_flip_vertically_on_load(1);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        std::string tmp = "textures/" + textureIMG;
+        unsigned char *data = stbi_load(tmp.c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            // Se a imagem for PNG com transparência
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+            // Se a imagem for JPG, e portanto sem transparência
+            //glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+
+            glGenerateMipmap(GL_TEXTURE_2D);
+        }
+        else
+        {
+            std::cout << "Failed to load texture" << std::endl;
+        }
+        stbi_image_free(data);
+        obj.texture = texture;
     }
     else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
+        obj.loadedTexture = false;
 
     obj.pointsCount = vectorSize / 11;
     obj.vertexes = vertices;
     obj.VAO = objVAO;
     obj.VBO = VBO;
-    obj.texture = texture;
+
 
     return obj;
 }
@@ -224,82 +232,21 @@ int main()
     //Shader lightingShader("model_lighting.vs", "model_lighting.fs");
 
     Shader lightCubeShader("light_cube.vs", "light_cube.fs");
-    float factor = 1.0f;
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
-    float verticesCube[] = {
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-        0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-        0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
 
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, 0.0f, 1.0f,
+    std::string models[] =
+        {
+            "chao.csv",
+            "paredes.csv"
+        };
 
-        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
-        -0.5f, -0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, -1.0f, 0.0f, 0.0f,
-
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, -0.5f, 1.0f, 0.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 1.0f, 0.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
-        0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
-        0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
-        -0.5f, -0.5f, 0.5f, 0.0f, -1.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
-
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-        0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-        -0.5f, 0.5f, 0.5f, 0.0f, 1.0f, 0.0f,
-        -0.5f, 0.5f, -0.5f, 0.0f, 1.0f, 0.0f};
-
-    std::string models[] = 
-    {
-        "chao.csv",
-        "paredes.csv"
-    };
-
-    int modelscount = sizeof(models)/sizeof(models[0]);
+    int modelscount = sizeof(models) / sizeof(models[0]);
     RenderableObj *objects = new RenderableObj[modelscount];
 
     for (int i = 0; i < modelscount; i++)
     {
         objects[i] = load_renderableObj(models[i]);
     }
-
-    // second, configure the light's VAO (VBO stays the same; the vertices are the same for the light object which is also a 3D cube)
-    unsigned int lightCubeVAO, lightCubeVBO;
-    glGenVertexArrays(1, &lightCubeVAO);
-    glGenBuffers(1, &lightCubeVBO);
-
-    glBindBuffer(GL_ARRAY_BUFFER, lightCubeVBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(verticesCube), verticesCube, GL_STATIC_DRAW);
-
-    glBindVertexArray(lightCubeVAO);
-
-    // note that we update the lamp's position attribute's stride to reflect the updated buffer data
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0);
-    // normal attribute
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void *)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    RenderableObj sun = load_renderableObj("sun.csv");
 
     // render loop
     // -----------
@@ -347,7 +294,10 @@ int main()
 
         for (int i = 0; i < modelscount; i++)
         {
-            glBindTexture(GL_TEXTURE_2D, objects[i].texture);
+            glBindTexture(GL_TEXTURE_2D, objects[i].texture);            
+            lightingShader.setBool("drawTexture", objects[i].loadedTexture);
+            
+            
             // render the cube
             glBindVertexArray(objects[i].VAO);
             glDrawArrays(GL_TRIANGLES, 0, objects[i].pointsCount);
@@ -362,8 +312,8 @@ int main()
         //model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
         lightCubeShader.setMat4("model", model);
 
-        glBindVertexArray(lightCubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(sun.VAO);
+        glDrawArrays(GL_TRIANGLES, 0, sun.pointsCount);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -373,16 +323,15 @@ int main()
 
     // optional: de-allocate all resources once they've outlived their purpose:
 
-        for (int i = 0; i < modelscount; i++)
-        {
-            glDeleteVertexArrays(1, &objects[i].VAO);
-            glDeleteBuffers(1, &objects[i].VBO);
-        }
+    for (int i = 0; i < modelscount; i++)
+    {
+        glDeleteVertexArrays(1, &objects[i].VAO);
+        glDeleteBuffers(1, &objects[i].VBO);
+    }
     // ------------------------------------------------------------------------
 
-     glDeleteVertexArrays(1, &lightCubeVAO);
-     glDeleteBuffers(1, &lightCubeVBO);
-
+    glDeleteVertexArrays(1, &sun.VAO);
+    glDeleteBuffers(1, &sun.VBO);
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
