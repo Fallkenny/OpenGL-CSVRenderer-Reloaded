@@ -233,11 +233,19 @@ int main()
 
     Shader lightCubeShader("light_cube.vs", "light_cube.fs");
 
-    std::string models[] =
-        {
-            "chao.csv",
-            "paredes.csv"
-        };
+    std::string models[] = 
+    {
+        "chao.csv",        
+        "paredes.csv",
+        "teto.csv",
+        "porta.csv",
+        "janela_d.csv",
+        "janela_e.csv",
+        "chamine.csv",
+        "caule.csv",
+        "copa.csv"
+        //"cerca.csv"
+    };
 
     int modelscount = sizeof(models) / sizeof(models[0]);
     RenderableObj *objects = new RenderableObj[modelscount];
